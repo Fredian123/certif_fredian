@@ -35,21 +35,26 @@ def filtrer_par_seuil(valeurs, seuil):
     :return: Une nouvelle liste contenant les valeurs >= seuil.
     :raises InvalidDataError: Si les entrées sont de types incorrects.
     """
+    # Validation du type du conteneur de valeurs
     if not isinstance(valeurs, (list, tuple, set)):
         raise InvalidDataError("Le paramètre 'valeurs' doit être un conteneur (liste, tuple, set).")
     
+    # Tentative de conversion sécurisée du seuil en float
     try:
         seuil_val = float(seuil)
     except (ValueError, TypeError) as err:
         raise InvalidDataError(f"Le seuil '{seuil}' doit être une valeur numérique convertible en float : {err}")
     
-    resultat = []
+    resultat = [] # Liste pour accumuler les valeurs filtrées
+    # Parcours des valeurs pour appliquer le filtre de programmation défensive
     for idx, v in enumerate(valeurs):
         try:
-            val_num = float(v)
+            val_num = float(v) # Conversion en float de la valeur courante
+            # Comparaison inclusive (supérieur ou égal)
             if val_num >= seuil_val:
                 resultat.append(val_num)
         except (ValueError, TypeError) as err:
+            # Si un élément n'est pas convertible en float
             raise InvalidDataError(
                 f"La valeur à l'index {idx} ('{v}') n'est pas numérique : {err}"
             )
@@ -79,24 +84,30 @@ def regrouper(enregistrements, cle):
     :return: Liste de dictionnaires sous la forme [{"cle": k, "membres": [...]}, ...] triée par clé.
     :raises InvalidDataError: Si les enregistrements sont malformés ou si la clé est absente.
     """
+    # Validation du type du conteneur d'enregistrements
     if not isinstance(enregistrements, (list, tuple)):
         raise InvalidDataError("Le paramètre 'enregistrements' doit être une liste ou un tuple.")
     
-    groupes_dict = {}
+    groupes_dict = {} # Table de hachage pour un regroupement en O(N)
     
+    # Parcours linéaire pour alimenter la table de hachage
     for idx, e in enumerate(enregistrements):
+        # Validation que l'élément est bien un dictionnaire
         if not isinstance(e, dict):
             raise InvalidDataError(f"L'enregistrement à l'index {idx} n'est pas un dictionnaire.")
+        # Validation que la clé demandée existe dans l'enregistrement courant
         if cle not in e:
             raise InvalidDataError(f"Clé '{cle}' absente de l'enregistrement à l'index {idx} : {e}")
         
-        k = e[cle]
+        k = e[cle] # Récupération de la valeur de la clé de regroupement
+        # Si la clé n'existe pas encore dans notre dictionnaire de groupes, on l'initialise
         if k not in groupes_dict:
             groupes_dict[k] = []
+        # Ajout de l'enregistrement courant à son groupe de manière linéaire et unique (pas de doublon)
         groupes_dict[k].append(e)
     
-    groupes = []
-    # Tri par clé croissante pour garantir un ordre prévisible et conforme
+    groupes = [] # Liste finale formatée
+    # Tri par clé croissante pour garantir un ordre prévisible et conforme, complexité O(K log K)
     for k in sorted(groupes_dict.keys()):
         groupes.append({"cle": k, "membres": groupes_dict[k]})
         
@@ -113,29 +124,36 @@ def indicateurs(valeurs):
     :return: Dictionnaire contenant {"moyenne": float, "min": float, "max": float}
     :raises InvalidDataError: Si la liste est vide ou si les données ne sont pas numériques.
     """
+    # Validation du cas limite : conteneur de valeurs vide
     if not valeurs:
         raise InvalidDataError("Impossible de calculer des indicateurs sur une liste de valeurs vide.")
     
-    total = 0.0
+    total = 0.0 # Somme cumulée
+    # Tentative d'initialisation du min et du max avec le premier élément
     try:
         mini = float(valeurs[0])
         maxi = float(valeurs[0])
     except (ValueError, TypeError, IndexError) as err:
         raise InvalidDataError(f"La première valeur n'est pas numérique ou valide : {err}")
         
+    # Parcours des valeurs pour calculer simultanément les statistiques en un seul passage O(N)
     for idx, v in enumerate(valeurs):
         try:
-            val_num = float(v)
-            total += val_num
+            val_num = float(v) # Conversion en float de la valeur courante
+            total += val_num   # Accumulation pour le calcul de la moyenne
+            # Mise à jour du minimum
             if val_num < mini:
                 mini = val_num
+            # Mise à jour du maximum
             if val_num > maxi:
                 maxi = val_num
         except (ValueError, TypeError) as err:
+            # Si un élément n'est pas numérique ou vide
             raise InvalidDataError(
                 f"La valeur à l'index {idx} ('{v}') n'est pas une valeur numérique valide : {err}"
             )
             
+    # Retourne les statistiques sous forme de dictionnaire
     return {
         "moyenne": total / len(valeurs), 
         "min": mini, 
