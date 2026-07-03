@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 """Point d'entree de l'utilitaire datatool."""
 
+from Depot_degrade_Etudiant_2.datatool import traitement
+from unittest import loader
 import sys
-import json
 
 import traitement
+
+import json
 
 
 def LireFichier(chemin):
@@ -44,6 +47,76 @@ def afficherGroupes(donnees):
         else:
             print(g["cle"], "-> aucune mesure valide")
 
+
+def main():
+    # 1. Analyse manuelle robuste des arguments
+    json_path = None
+    args = sys.argv[1:]
+
+    if "--json" in args:
+        idx = args.index("--json")
+        if idx + 1 < len(args):
+            json_path = args[idx + 1]
+            args.pop(idx + 1)
+            args.pop(idx)
+
+        else:
+            print("Erreur: L'option --json necessite un fichier de sortie.")
+            return
+
+    if len(args) ==0:
+        print("Erreur: vous devez fournir le chemin du fichier CSV en arguement ")
+        return 
+    
+    chemins_csv = args[0]
+    try :
+        donnees = LireFichier(chemins_csv)
+    except FileNotFoundError:
+        print(f"Erreur le fichier {chemins_csv} est introuvable ou illisible ")
+        return
+
+    # 2. Gestion du seuil optionnel
+    if len (args) >1:
+        try :
+            s=float (args[1])
+            valeurs=1
+            for  e in donnees:
+                if e["valeur"]!=-999:
+                    valeurs.append(e["valeur"])
+                    retenues=traitement.filtrer_par_seuil(valeurs,s)
+                    print(retenues,"Valeurs retenues sur",len(valeurs))
+                    except ValueError :
+                        print("Erreur seuil")
+
+
+
+    donnees = LireFichier(sys.argv[1])
+    if len(sys.argv) > 2:
+        s = float(sys.argv[2])
+        valeurs = []
+        for e in donnees:
+            if e["valeur"] != -999:
+                valeurs.append(e["valeur"])
+        retenues = traitement.filtrer_par_seuil(valeurs, s)
+        print(len(retenues), "valeurs retenues sur", len(valeurs))
+    afficherGroupes(donnees)
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
+import json
+
+# ...
 
 def main():
     # 1. Analyse manuelle robuste des arguments
@@ -96,7 +169,3 @@ def main():
             print(f"Erreur lors de l'exportation JSON : {e}")
     else:
         afficherGroupes(donnees)
-
-
-if __name__ == "__main__":
-    main()
