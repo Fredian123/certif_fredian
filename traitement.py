@@ -3,10 +3,10 @@
 
 
 def filtrer_par_seuil(valeurs, seuil):
-    """Filtre une liste de valeurs numeriques selon un seuil."""
+    """Filtre une liste de valeurs numeriques selon un seuil (superieur ou egal)."""
     resultat = []
     for v in valeurs:
-        if v > seuil:
+        if v >= seuil:
             resultat.append(v)
     return resultat
 
