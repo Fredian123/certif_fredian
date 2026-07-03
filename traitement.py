@@ -12,21 +12,17 @@ def filtrer_par_seuil(valeurs, seuil):
 
 
 def regrouper(enregistrements, cle):
-    """Regroupe une liste de dictionnaires selon la valeur d'une cle."""
-    groupes = []
+    """Regroupe une liste de dictionnaires selon la valeur d'une cle et trie par cle croissante."""
+    groupes_dict = {}
     for e in enregistrements:
         k = e[cle]
-        nouveau = True
-        for g in groupes:
-            if g["cle"] == k:
-                nouveau = False
-                g["membres"].append(e)
-        if nouveau:
-            membres = []
-            for e2 in enregistrements:
-                if e2[cle] == k:
-                    membres.append(e2)
-            groupes.append({"cle": k, "membres": membres})
+        if k not in groupes_dict:
+            groupes_dict[k] = []
+        groupes_dict[k].append(e)
+    
+    groupes = []
+    for k in sorted(groupes_dict.keys()):
+        groupes.append({"cle": k, "membres": groupes_dict[k]})
     return groupes
 
 
