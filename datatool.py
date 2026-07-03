@@ -2,6 +2,7 @@
 """Point d'entree de l'utilitaire datatool."""
 
 import sys
+import json
 
 import traitement
 
@@ -45,19 +46,56 @@ def afficherGroupes(donnees):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("usage: python datatool.py <fichier.csv> [seuil]")
+    # 1. Analyse manuelle robuste des arguments
+    json_path = None
+    args = sys.argv[1:]
+    
+    if "--json" in args:
+        idx = args.index("--json")
+        if idx + 1 < len(args):
+            json_path = args[idx + 1]
+            args.pop(idx + 1)
+            args.pop(idx)
+        else:
+            print("Erreur: L'option --json necessite un fichier de sortie.")
+            return
+
+    if len(args) < 1:
+        print("usage: python datatool.py <fichier.csv> [seuil] [--json sortie.json]")
         return
-    donnees = LireFichier(sys.argv[1])
-    if len(sys.argv) > 2:
-        s = float(sys.argv[2])
-        valeurs = []
-        for e in donnees:
-            if e["valeur"] != -999:
-                valeurs.append(e["valeur"])
-        retenues = traitement.filtrer_par_seuil(valeurs, s)
-        print(len(retenues), "valeurs retenues sur", len(valeurs))
-    afficherGroupes(donnees)
+
+    chemin_csv = args[0]
+    try:
+        donnees = LireFichier(chemin_csv)
+    except FileNotFoundError:
+        print(f"Erreur: Le fichier '{chemin_csv}' est introuvable.")
+        return
+
+    # 2. Gestion du seuil optionnel
+    if len(args) > 1:
+        try:
+            s = float(args[1])
+            valeurs = []
+            for e in donnees:
+                if e["valeur"] != -999:
+                    valeurs.append(e["valeur"])
+            retenues = traitement.filtrer_par_seuil(valeurs, s)
+            print(len(retenues), "valeurs retenues sur", len(valeurs))
+        except ValueError:
+            print("Erreur: Le seuil doit etre un nombre valide.")
+            return
+
+    # 3. Export JSON ou Affichage console
+    if json_path:
+        groupes = traitement.regrouper(donnees, "site")
+        try:
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(groupes, f, ensure_ascii=False, indent=4)
+            print(f"Exportation JSON reussie dans : {json_path}")
+        except Exception as e:
+            print(f"Erreur lors de l'exportation JSON : {e}")
+    else:
+        afficherGroupes(donnees)
 
 
 if __name__ == "__main__":
