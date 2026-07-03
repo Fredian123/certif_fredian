@@ -1,6 +1,7 @@
 __pycache__/
 tests/__pycache__/
 conception/specs/2026-07-03-datatool-design.md
+conception/specs/guide_corrections.md
 *.pyc
 *.pyo
 sortie.json
